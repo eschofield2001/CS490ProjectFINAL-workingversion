@@ -24,122 +24,100 @@ public class ProcessorHRRN extends Processor{
      * Overrides run in Processor super class to implement the HRRN algorithm
      */
     public void run(){
-        //Can be very similar to original run(), just pick index based off of HRRN value instead of using FIFO
-        activeProcesses.add(waitingProc.getProcessList().get(0));
-        Object[] timeRow;
+        int time = 0;
+        Object[] timeRow = new Object[0];
         boolean hasProcess = false;
-        int currentRow = 0;
-        int maxIndex = 0;
-        Process proc = null;
-        int arrivingProc;
         float waitTime;
         float Numerator;
         float hrrnTime;
         float maxHrrn = 0;
+        int maxIndex = 0;
 
-        while(!Main.getIsPaused()){
-            while(!waitingProc.getProcessList().isEmpty()){
-                //Since it isn't shared, don't need to use lock for this phase. Look through the queue and find a process to run
-                while(hasProcess == false && currentRow < activeProcesses.size()){
-                    for (int i=0; i< activeProcesses.size();) {
-                        waitTime = systemTimer - waitingProc.getProcessList().get(i).getArrivalTime();
-                        Numerator = waitTime + waitingProc.getProcessList().get(i).getServiceTime();
-                        hrrnTime = Numerator / waitingProc.getProcessList().get(i).getServiceTime();
+        while(!waitingProc.getProcessList().isEmpty()){
+            //Get index of process with highest HRRN
+            maxIndex = 0;
+            for (int i=0; i< waitingProc.getProcessList().size(); i++) {
+                waitTime = systemTimer - waitingProc.getProcessList().get(i).getArrivalTime();
+                Numerator = waitTime + waitingProc.getProcessList().get(i).getServiceTime();
+                hrrnTime = Numerator / waitingProc.getProcessList().get(i).getServiceTime();
 
-                        if (hrrnTime > maxHrrn) {
-                            maxHrrn = hrrnTime;
-                            maxIndex = i;
-                        }
-                    i++;
-                    }
-
-                        if(activeProcesses.get(currentRow).getArrivalTime() <= systemTimer){
-                        cpu.setProcess(activeProcesses.get(maxIndex).getProcessID());
-                        cpu.setTimeRem(activeProcesses.get(maxIndex).getTimeRem());
-
-                        hasProcess = true;
-                        waitingProc.removeRow(activeProcesses.get(maxIndex).getProcessID());
-                    }
-                    else{
-                        currentRow++;
-                    }
-                }
-                currentRow = 0;
-
-                if(hasProcess == false){
-                    //No process has arrived yet, sleep and check next time unit
-                    try {
-                        Thread.sleep(Main.getTimeUnit().getTimeUnit());
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    systemTimer++;
-                    arrivingProc = waitingProc.getIncomingProcess(systemTimer);
-                    if(arrivingProc != -1){
-                        activeProcesses.add(waitingProc.getProcessList().get(arrivingProc));
-                    }
-                }
-
-                //While processor has a process:
-                if(hasProcess){
-                    //Sleep until process has finished executing
-                    if (activeProcesses.get(maxIndex).getTimeRem() > 0){
-                        if (!Main.getIsPaused()){
-                            try {
-                                Thread.sleep(Main.getTimeUnit().getTimeUnit());
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            activeProcesses.get(maxIndex).setTimeRem(activeProcesses.get(maxIndex).getTimeRem() - 1);
-                            cpu.setTimeRem(activeProcesses.get(maxIndex).getTimeRem());
-                            systemTimer++;
-                            arrivingProc = waitingProc.getIncomingProcess(systemTimer);
-                            if(arrivingProc != -1){
-                                activeProcesses.add(waitingProc.getProcessList().get(arrivingProc));
-                            }
-                        }
-                        else{
-                            try {
-                                Thread.sleep(Main.getTimeUnit().getTimeUnit());
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                    if (activeProcesses.get(maxIndex).getTimeRem() == 0){
-                        //Process has finished executing, add to process table
-                        timeRow = new Object[6];
-                        timeRow[0] = activeProcesses.get(maxIndex).getProcessID();
-                        timeRow[1] = activeProcesses.get(maxIndex).getArrivalTime();
-                        timeRow[2] = activeProcesses.get(maxIndex).getServiceTime();
-                        int tat = systemTimer - activeProcesses.get(maxIndex).getArrivalTime();
-                        float nTat = (float) tat / activeProcesses.get(maxIndex).getServiceTime();
-                        timeRow[3] = systemTimer;
-                        timeRow[4] = tat;
-                        timeRow[5] = nTat;
-                        totalntat += nTat;
-
-                        finishedProc.getModel().addRow(timeRow);
-                        procFinished++;
-                        ntatDisplay.setAvg(procFinished, totalntat);
-                        activeProcesses.remove(maxIndex);
-                    }
-                    /*else{
-                        //Process didn't finish executing, add to back of process queue
-                        waitingProc.getProcessList().add(activeProcesses.get(0));
-                        Object[] row = new Object[2];
-                        row[0] = activeProcesses.get(0).getProcessID();
-                        row[1] = activeProcesses.get(0).getTimeRem();
-                        waitingProc.getModel().addRow(row);
-
-                        proc = activeProcesses.get(0);
-                        activeProcesses.remove(0);
-                        activeProcesses.add(proc);
-                    }*/
-                    hasProcess = false;
+                if (hrrnTime > maxHrrn) {
+                    maxHrrn = hrrnTime;
+                    maxIndex = i;
                 }
             }
+
+            //Check that the process next in line has actually "arrived". If not, sleep for a time unit and check again.
+            if(waitingProc.getProcessList().get(maxIndex).getArrivalTime() <= systemTimer) {
+                cpu.setProcess(waitingProc.getProcessList().get(maxIndex).getProcessID());
+                cpu.setTimeRem(waitingProc.getProcessList().get(maxIndex).getServiceTime());
+                time = waitingProc.getProcessList().get(maxIndex).getServiceTime();
+
+                //Initialize table
+                timeRow = new Object[6];
+                timeRow[0] = waitingProc.getProcessList().get(maxIndex).getProcessID();
+                timeRow[1] = waitingProc.getProcessList().get(maxIndex).getArrivalTime();
+                timeRow[2] = waitingProc.getProcessList().get(maxIndex).getServiceTime();
+
+                //Update process table and queue
+                waitingProc.removeRow(maxIndex);
+                hasProcess = true;
+            }
+            else{
+                //Process hasn't arrived yet, sleep and wait for next time unit
+                try {
+                    Thread.sleep(Main.getTimeUnit().getTimeUnit());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                systemTimer++;
+            }
+
+
+            //Execute the process one second at a time, checking each second if the system is paused and pausing execution if it is
+            if(hasProcess) {
+                for (int j = time; j > 0; j--) {
+                    if (Main.getIsPaused()) {
+                        //Do nothing if paused
+                        try {
+                            Thread.sleep(Main.getTimeUnit().getTimeUnit());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        j++;
+                    } else {
+                        //Sleep for a second and update timer
+                        try {
+                            Thread.sleep(Main.getTimeUnit().getTimeUnit());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        cpu.setTimeRem(j-1);
+                        systemTimer++;
+                    }
+
+                }
+                //Calculate table values
+                int taT = systemTimer - (Integer) timeRow[1];
+                float nTaT = (float) taT / (Integer) timeRow[2];
+                timeRow[3] = systemTimer;
+                timeRow[4] = taT;
+                timeRow[5] = nTaT;
+                totalntat += nTaT;
+
+                //Add timeRow to the finished process table
+                finishedTableLock.lock();
+                try{
+                    finishedProc.getModel().addRow(timeRow);
+                } finally{
+                    finishedTableLock.unlock();
+                }
+
+                hasProcess = false;
+                procFinished++;
+                ntatDisplay.setAvg(procFinished, totalntat);
+            }
+
         }
     }
 }

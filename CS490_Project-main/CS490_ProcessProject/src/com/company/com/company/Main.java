@@ -83,12 +83,10 @@ public class Main {
         Lock processQueueLock = new ReentrantLock();
         Lock finishedTableLock = new ReentrantLock();
         //Executor objects representing the 2 CPUs
-//        Processor CPU1 = new Processor(cpu1, processQueueLock, waitingProc1, timeTable1, finishedTableLock, ntat1);
-//        Processor CPU2 = new Processor(cpu2, processQueueLock, waitingProc2, timeTable2, finishedTableLock, ntat2);
         //CPU implementing round robin
         Processor CPU2 = new ProcessorRR(cpu2, processQueueLock, waitingProc2, timeTable2, finishedTableLock, ntat2, rrTimeSlice);
         //CPU implementing HRRN
-        Processor CPU1 = new Processor(cpu1, processQueueLock, waitingProc1, timeTable1, finishedTableLock, ntat1);
+        Processor CPU1 = new ProcessorHRRN(cpu1, processQueueLock, waitingProc1, timeTable1, finishedTableLock, ntat1);
         Thread execThread1 = new Thread(CPU1);
         Thread execThread2 = new Thread(CPU2);
 
