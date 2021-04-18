@@ -1,4 +1,4 @@
-package com.company;
+package com.company.Displays;
 
 import javax.swing.*;
 import javax.swing.border.Border;

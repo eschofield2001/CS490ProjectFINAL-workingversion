@@ -1,4 +1,6 @@
-package com.company;
+package com.company.Displays;
+
+import com.company.Process;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

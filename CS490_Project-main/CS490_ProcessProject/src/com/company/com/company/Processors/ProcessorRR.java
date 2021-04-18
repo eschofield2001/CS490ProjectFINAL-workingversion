@@ -1,4 +1,8 @@
-package com.company;
+package com.company.Processors;
+
+import com.company.*;
+import com.company.Displays.*;
+import com.company.Process;
 
 import java.util.ArrayList;
 import java.util.concurrent.locks.Lock;

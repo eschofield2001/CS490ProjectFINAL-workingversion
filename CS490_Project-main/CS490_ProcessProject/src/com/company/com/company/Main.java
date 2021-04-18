@@ -1,5 +1,10 @@
 package com.company;
 
+import com.company.Displays.*;
+import com.company.Processors.Processor;
+import com.company.Processors.ProcessorHRRN;
+import com.company.Processors.ProcessorRR;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.FileNotFoundException;

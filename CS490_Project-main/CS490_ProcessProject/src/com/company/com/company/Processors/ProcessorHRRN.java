@@ -1,4 +1,11 @@
-package com.company;
+package com.company.Processors;
+
+import com.company.*;
+import com.company.Displays.CPUPanel;
+import com.company.Displays.FinishedTable;
+import com.company.Displays.NTATDisplay;
+import com.company.Displays.WaitingQueue;
+import com.company.Process;
 
 import java.util.ArrayList;
 import java.util.concurrent.locks.Lock;
