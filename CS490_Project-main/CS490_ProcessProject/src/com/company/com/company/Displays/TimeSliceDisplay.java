@@ -3,9 +3,15 @@ package com.company.Displays;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * A panel that allows the user to enter a new time slice value for RR
+ */
 public class TimeSliceDisplay extends JPanel{
     int timeSlice;
 
+    /**
+     * Initializes the time slice to 1 and displays the GUI
+     */
     public TimeSliceDisplay(){
         timeSlice = 1;
 
@@ -24,6 +30,10 @@ public class TimeSliceDisplay extends JPanel{
         add(enterButton);
     }
 
+    /**
+     * Returns the current time slice value
+     * @return The time slice
+     */
     public int getTimeSlice(){
         return timeSlice;
     }
